@@ -22,6 +22,7 @@ public class HotelManagementController {
     private Map<Integer, User> userMap = new HashMap<>();
 
     private Map<String, Booking> bookingMap = new HashMap<>();
+    private Map<Integer, Integer> bookings = new HashMap<>();
 
     @PostMapping("/add-hotel")
     public String addHotel(@RequestBody Hotel hotel){
@@ -53,13 +54,15 @@ public class HotelManagementController {
         //Incase there is a tie return the lexicographically smaller hotelName
         //Incase there is not even a single hotel with atleast 1 facility return "" (empty string)
         String name = "";
-        int maxF = Integer.MIN_VALUE;
+        int maxF = 0;
         for(Hotel hotel : hotelMap.values()) {
             if(maxF < hotel.getFacilities().size()) {
                 maxF = hotel.getFacilities().size();
                 name = hotel.getHotelName();
-            } else if (maxF == hotel.getFacilities().size() && name.compareTo(hotel.getHotelName()) > 0) {
-                name = hotel.getHotelName();
+            } else if (maxF == hotel.getFacilities().size()) {
+                if(name.compareTo(hotel.getHotelName()) > 0) {
+                    name = hotel.getHotelName();
+                }
             }
         }
         return name;
@@ -86,6 +89,9 @@ public class HotelManagementController {
         bookingMap.put(bookingId, booking);
         hotelMap.put(hotel.getHotelName(), hotel);
 
+        int aadharCard = booking.getBookingAadharCard();
+        Integer currentBookings = bookings.get(aadharCard);
+        bookings.put(aadharCard, Objects.nonNull(currentBookings)?1+currentBookings:1);
 
         return totalPrice;
     }
@@ -93,15 +99,8 @@ public class HotelManagementController {
     @GetMapping("/get-bookings-by-a-person/{aadharCard}")
     public int getBookings(@PathVariable("aadharCard")Integer aadharCard)
     {
-        //In this function return the bookings done by a person 
-        int bookings = 0;
-        for(Booking booking : bookingMap.values()) {
-            String userName = booking.getBookingPersonName();
-            if(userMap.get(userName).getaadharCardNo() == aadharCard) {
-                bookings++;
-            }
-        }
-        return bookings;
+        //In this function return the bookings done by a person
+        return bookings.get(aadharCard);
     }
 
     @PutMapping("/update-facilities")
